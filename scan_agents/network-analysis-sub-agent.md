@@ -87,6 +87,22 @@ Categorize findings by severity:
 - **Low**: Minimal risk, address when convenient
 - **Informational**: Best practice recommendations
 
+## Scope & Exclusions (Must Follow)
+
+- Do NOT report vulnerabilities for endpoints exclusively found under non-production or auxiliary paths. Excluded from vulnerability reporting (but MAY be read to understand architecture):
+  - `tests/`, `test/`, `__tests__/`
+  - `examples/`, `example/`, `examples/`
+  - `cookbook/`, `cookbooks/`
+  - `docs/examples/`
+  - `demo/`, `demos/`, `samples/`
+- If an endpoint or risky pattern exists only in these paths, treat as informational and DO NOT include it in machine-readable outputs used downstream.
+- Always consult the root `claude.md` for business context and false-positive guardrails.
+
+## Business Logic Awareness
+
+- SSRF nuance: Accepting intranet URLs in browser/client use-cases may be legitimate; SSRF concerns focus on server-side outbound requests to attacker-controlled targets crossing trust boundaries. Use `claude.md` and code structure to distinguish.
+- Public endpoints by design are not authentication bypass; confirm against documented access model in `claude.md`.
+
 ## Quality Assurance
 
 ### Validation Checks

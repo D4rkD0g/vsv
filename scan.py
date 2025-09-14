@@ -102,6 +102,24 @@ prompt = """ You are a Static Analysis Scheduler Agent responsible for orchestra
   - Document all assumptions and limitations
 """
 
+prompt += """
+
+\nGLOBAL SCOPE & EXCLUSIONS (MUST FOLLOW)
+- Do NOT report vulnerabilities from non-production paths: tests/, test/, __tests__/, examples/, example/, example(s)/, cookbook/, cookbooks/, docs/examples/, demo/, demos/, samples/.
+- These paths MAY be analyzed to understand the overall architecture and business logic, but any issues found there must be marked informational and MUST NOT be added to vulnerability_candidates or final verified findings.
+- If the ONLY occurrence of a pattern is under these excluded paths, treat it as non-actionable.
+
+CLAUDE.MD REQUIREMENT
+- Create or update a root file named 'claude.md' summarizing:
+  1) Scope & Exclusions (copy the above list)
+  2) Project Purpose (business objective in plain language)
+  3) Business Logic & Main Data Flows (entrypoints, critical operations)
+  4) Domain-specific False Positive Guardrails (e.g., SSRF: client/browser projects may accept intranet URLs legitimately; SSRF applies to server-initiated requests that cross trust boundaries)
+  5) Assumptions & Non-goals
+- Keep this document concise and actionable. Subsequent agents MUST consult claude.md to reduce false positives.
+"""
+
+
 def setup_target_environment(target_path: str) -> Path:
     """设置目标环境，复制agents文件夹到目标路径下的.agent文件夹"""
     target_dir = Path(target_path).resolve()
@@ -138,7 +156,49 @@ def setup_target_environment(target_path: str) -> Path:
         print(f"错误: 复制agents文件夹失败: {e}")
         sys.exit(1)
     
+    # Also ensure a claude.md exists with constraints and placeholders
+    ensure_claude_md(target_dir)
     return target_dir
+
+
+def ensure_claude_md(target_dir: Path) -> None:
+    """Create claude.md in target repo root if it does not exist, with constraints and context placeholders."""
+    claude_md = target_dir / "claude.md"
+    if claude_md.exists():
+        return
+    content = """# Claude Context & Constraints
+
+This file documents the analysis constraints and project context. All agents MUST consult this file to avoid false positives.
+
+## Scope & Exclusions for Vulnerability Reporting
+- Exclude from vulnerability reporting (but OK to read for understanding):
+  - tests/, test/, __tests__/
+  - examples/, example/, example(s)/
+  - cookbook/, cookbooks/
+  - docs/examples/
+  - demo/, demos/, samples/
+
+If an issue appears only in these paths, mark it informational and DO NOT include it in machine-readable outputs.
+
+## Project Purpose (to be filled by analysis)
+> Summarize the business/domain purpose of this project in 2-4 sentences.
+
+## Business Logic & Main Data Flows (to be filled by analysis)
+> List primary entrypoints (API routes/CLI), core operations, and sensitive flows.
+
+## Domain-specific False Positive Guardrails
+- SSRF nuance: Client/browser projects may allow users to input intranet URLs legitimately. SSRF applies to server-side code that initiates network requests to attacker-controlled targets crossing trust boundaries. Distinguish client vs server contexts.
+- XSS nuance: Templating with trusted static inputs is not XSS; verify tainted data reaches sink without proper encoding.
+- Auth/Authorization: Public endpoints by design are not auth bypass; validate against documented access model.
+
+## Assumptions & Non-goals
+- Keep local-only execution. Avoid contacting external hosts during analysis/verification.
+"""
+    try:
+        claude_md.write_text(content, encoding="utf-8")
+        print(f"✓ 已创建 {claude_md}")
+    except Exception as e:
+        print(f"警告: 创建 {claude_md} 失败: {e}")
 
 
 async def FindVulnerabilities(target_directory: Path):

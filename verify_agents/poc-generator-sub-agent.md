@@ -24,6 +24,21 @@ Output JSON (poc_candidates):
 - items: array of poc_candidate
 - notes
 
+## Scope & Exclusions (Must Follow)
+
+- Consult the root `claude.md` before proposing PoCs.
+- Do NOT propose PoCs for reports that reference files exclusively under:
+  - `tests/`, `test/`, `__tests__/`
+  - `examples/`, `example/`, `examples/`
+  - `cookbook/`, `cookbooks/`
+  - `docs/examples/`
+  - `demo/`, `demos/`, `samples/`
+- If the only evidence is inside these paths, mark the item informational/non-actionable and document rationale.
+
+## Business Logic Awareness
+
+- SSRF nuance: If `claude.md` indicates client/browser flows that legitimately accept intranet URLs, do not treat this as SSRF; focus on server-side outbound requests crossing trust boundaries.
+
 Example (HTTP):
 {
   "items": [

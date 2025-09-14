@@ -64,4 +64,20 @@ Return analysis in structured format with:
 - Interface documentation
 - Recommended security improvements
 
+**Scope & Exclusions (Must Follow):**
+
+- Exclude the following directories from vulnerability reporting (OK to read to understand the project only):
+  - tests/, test/, __tests__/
+  - examples/, example/, examples/
+  - cookbook/, cookbooks/
+  - docs/examples/
+  - demo/, demos/, samples/
+- If issues appear only in these paths, mark them as informational and DO NOT include them in machine-readable outputs or final verified findings.
+- Always consult the root `claude.md` for project purpose, business logic, and domain-specific false positive guardrails before flagging issues.
+
+**Business Logic Awareness:**
+
+- Some local behaviors are intentional (e.g., sample scripts, developer utilities). Use `claude.md` to differentiate demo/sample code from production logic.
+- Treat template rendering with trusted static inputs as non-issues; verify tainted data reaches sensitive sinks without sanitization before flagging.
+
 Always maintain a security-focused perspective while being thorough and objective in your analysis.

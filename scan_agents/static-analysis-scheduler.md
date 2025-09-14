@@ -58,6 +58,18 @@ Your workflow follows this exact sequence:
     - `dedupe_key` (stable hash based on file path + code context)
     - `suggested_inputs_for_analyzer` (minimal context for deep analysis)
 
+5.5 **Triage & Selection Gate (Required before analysis)**:
+  - Enrich each candidate with:
+    - `reachability` (one of: `proved|assumed|unknown`) with brief justification
+    - `sanitizers_present`: array of detected sanitization/validation routines on the path
+    - `source_kind` (e.g., query/body/header/cli/env/file) and `sink_kind` (e.g., SQL/FS/HTTP/exec)
+    - `dataflow_path_length` (approximate hops) and `framework_mitigations` (e.g., CSRF middleware)
+  - Dedupe across detectors (web/local) by `dedupe_key` and file-range hash; merge metadata/confidence.
+  - Apply selection policy to reduce noise:
+    - Keep only candidates meeting `(severity in [Critical,High]) OR (confidence == high AND reachability != unknown)`
+    - Drop candidates solely under excluded directories (see Scope & Exclusions).
+    - Cap the batch size (e.g., `max_candidates=50`) by risk score; defer the rest.
+
 6. **Verification Loop and Per‑Vulnerability Deep Analysis**:
   - For each item in `vulnerability_candidates`, invoke the `vulnerability-analyzer` sub-agent using the Task tool, passing the candidate JSON, minimal surrounding code context (e.g., ±30 lines or function body), and project metadata (`project.name`, `project.language`) as input.
   - The `vulnerability-analyzer` MUST:
@@ -79,6 +91,17 @@ Your workflow follows this exact sequence:
 - Handle errors gracefully and provide meaningful feedback
 - Ensure comprehensive coverage of all identified vulnerabilities
 - Generate final consolidated security report
+
+**Scope & Exclusions (Must Follow):**
+
+- Exclude the following paths from vulnerability reporting (OK to read for understanding only):
+  - tests/, test/, __tests__/
+  - examples/, example/, examples/
+  - cookbook/, cookbooks/
+  - docs/examples/
+  - demo/, demos/, samples/
+- If a pattern occurs only under these paths, mark it informational and DO NOT include it in `vulnerability_candidates` or final verified outputs.
+- Always consult the root `claude.md` for project purpose, business logic, and domain-specific false positive guardrails before adding candidates (e.g., SSRF in client/browser projects).
 
 **Quality Assurance:**
 - Verify each analysis step completes thoroughly

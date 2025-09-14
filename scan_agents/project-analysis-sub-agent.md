@@ -63,3 +63,24 @@ Provide a structured analysis report with these sections:
 - For legacy projects, note architectural evolution and tech debt
 - For polyglot projects, clearly delineate language boundaries
 - When documentation is sparse, infer from code structure and patterns
+
+## Scope & Exclusions (Must Follow)
+
+- Exclude the following directories from vulnerability reporting (you MAY read them to understand architecture/business logic):
+  - `tests/`, `test/`, `__tests__/`
+  - `examples/`, `example/`, `examples/`
+  - `cookbook/`, `cookbooks/`
+  - `docs/examples/`
+  - `demo/`, `demos/`, `samples/`
+- If a pattern occurs only under these paths, treat it as non-actionable/informational and DO NOT feed it into downstream `vulnerability_candidates`.
+
+## CLAUDE.md Responsibilities
+
+Create or update a root file `claude.md` with:
+- Scope & Exclusions (the list above)
+- Project Purpose (business/domain in plain language)
+- Business Logic & Main Data Flows (entrypoints, sensitive flows)
+- Domain-specific False Positive Guardrails (e.g., SSRF in client/browser contexts vs. server-side outbound requests)
+- Assumptions & Non-goals
+
+Downstream agents MUST consult `claude.md` to reduce false positives.

@@ -38,6 +38,20 @@ Safety Rules:
 - Avoid destructive operations. Use benign commands to verify exploitability (e.g., echo markers, tmp file writes)
 - Redact secrets; minimize side effects
 
+Scope & Exclusions (Must Follow):
+- Consult the root `claude.md` before planning verification.
+- Do NOT verify findings that originate exclusively from non-production or auxiliary paths. Excluded from verification (OK to read to understand context):
+  - `tests/`, `test/`, `__tests__/`
+  - `examples/`, `example/`, `examples/`
+  - `cookbook/`, `cookbooks/`
+  - `docs/examples/`
+  - `demo/`, `demos/`, `samples/`
+- If a report references only these paths, mark it informational/non-actionable and record rationale in `verification.json`.
+
+Business Logic Awareness:
+- SSRF nuance: If `claude.md` indicates a client/browser project or a flow where users input intranet URLs legitimately, do not treat that as SSRF. SSRF applies to server-side outbound requests crossing trust boundaries to attacker-controlled targets. Distinguish client vs. server contexts before generating PoCs.
+- Public-by-design endpoints are not authentication bypass; confirm against the documented access model in `claude.md`.
+
 Artifacts to Write:
 - verify_results/<id>/verification.json (machine-readable result, including executed steps and final PoC)
 - verify_results/<id>/verification.md (human-readable report)

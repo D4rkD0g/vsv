@@ -17,11 +17,13 @@ VSV 由两个主要组件构成：
 - **全面漏洞覆盖**: 支持 SSRF、SQL注入、XSS、目录遍历等网络漏洞，以及语言特定漏洞
 - **自动化验证**: 生成并执行 PoC，迭代优化直至可靠复现
 - **标准化输出**: 生成机器可读的 JSON 报告与人类友好的 Markdown 报告
+- **自动发现**: 监控 GitHub starred 仓库并自动克隆分析
 
 ## 系统要求
 
 - Python 3.8+
-- 依赖项：`claude-code-sdk`
+- 依赖项：`claude-code-sdk`, `requests`
+- Git (用于克隆仓库)
 
 ## 安装
 
@@ -63,6 +65,26 @@ python verify.py /path/to/target/project /path/to/vulnerability_report.md
 - `verification.json`: 验证结果
 - `verification.md`: 详细验证报告
 - `reproduce.http` 或 `reproduce.sh`: 可复现的 PoC
+
+### 自动发现模式
+
+监控你的 GitHub starred 仓库并自动克隆新发现的仓库：
+
+```bash
+# 设置 GitHub Token (推荐)
+export GITHUB_TOKEN=your_personal_access_token
+
+# 启动监控
+python star_monitor.py
+```
+
+脚本会：
+- 每 60 秒检查一次最新的 starred 仓库
+- 使用 ETag 条件请求避免配额消耗
+- 自动克隆新发现的仓库到 `cloned_repos/` 目录
+- 保存状态到 `star_state.json`
+
+**注意**：建议创建细粒度的 Personal Access Token，仅需要 `Starring(read)` 权限。
 
 ## 工作流程
 
